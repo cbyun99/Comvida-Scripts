@@ -1,7 +1,6 @@
 *.xlsx
 *.pdf
 *.code-workspace
-*.txt
 *.vba
 *.pyc
 
