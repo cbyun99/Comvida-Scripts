@@ -1,0 +1,13 @@
+*.xlsx
+*.pdf
+*.code-workspace
+*.txt
+*.vba
+*.pyc
+
+/reports
+/dialog tests
+
+comvida_notification_functions.py
+
+
