@@ -5,7 +5,7 @@
 *.pyc
 
 /reports
-/dialog tests
+/Test Files
 
 comvida_notification_functions.py
 
