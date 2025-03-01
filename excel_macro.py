@@ -22,21 +22,21 @@ def attendance_log(file_path="Reports/SSAttendanceLog.xlsx", save_file_path=None
 
     location = "TH" if str(ws.cell(row=3, column=4).value).startswith("1") else "VH" if str(ws.cell(row=3, column=4).value).startswith("C") else "TC"
 
-    #Combine Rows that are doubled due to OT
+    #Combine Rows that are doubled due to OT and shifts with BANKTK
     max_row = ws.max_row
     deleted_rows = 0
-    i = 3
+    i = 2
     while i < max_row - 1:
-        b_i = ws[f"B{i}"].value
+        b_i = ws[f"B{i}"].value #listname
         b_next = ws[f"B{i+1}"].value 
-        d_i = ws[f"D{i}"].value
+        d_i = ws[f"D{i}"].value #shiftcode
         d_next = ws[f"D{i+1}"].value 
-        n_i = ws[f"N{i}"].value
+        n_i = ws[f"N{i}"].value #starttime
         n_next = ws[f"N{i+1}"].value 
-        o_i= ws[f"O{i}"].value
+        o_i= ws[f"O{i}"].value  #endtime
         o_next = ws[f"O{i+1}"].value 
         
-        if b_i == b_next and d_i == d_next:
+        if b_i == b_next and d_i == d_next: #if duplicate shift (due to OT)
             p_i = ws[f"P{i}"].value if ws[f"P{i}"].value is not None else 0
             p_next = ws[f"P{i+1}"].value if ws[f"P{i+1}"].value is not None else 0
             p_val = p_i + p_next
@@ -47,6 +47,11 @@ def attendance_log(file_path="Reports/SSAttendanceLog.xlsx", save_file_path=None
             ws.delete_rows(i+1)
             deleted_rows += 1
             i += 1
+        elif d_i == "BANKTK": #if shift is BANKTK
+            ws.delete_rows(i)
+            print(b_i + " row " + i + " deleted (BANKTK)" )
+            deleted_rows += 1
+            i+=1
         else:
             i += 1
 
@@ -115,7 +120,7 @@ def attendance_log(file_path="Reports/SSAttendanceLog.xlsx", save_file_path=None
                              CellRange("B" + str(first_page_max + 1) + ":P" + str(ws.max_row))]
     else:
         border_ranges = [CellRange("B1:P" + str(ws.max_row))]
-    border_ranges.append(CellRange("B1:P1"))
+    border_ranges.extend([CellRange("B1:P1"), CellRange("B2:P2")])
 
     for border_range in border_ranges:
         for row, col in border_range.cells:
@@ -152,7 +157,7 @@ def attendance_log(file_path="Reports/SSAttendanceLog.xlsx", save_file_path=None
     wb.save(save_file_path)
 
 def main(): 
-    attendance_log("example alog.xlsx")
+    attendance_log("example alog 3.xlsx")
 
 
 if __name__ == "__main__":
