@@ -133,6 +133,63 @@ def comvida_night_attendance_log():
         else:
             break
 
+def comvida_SS_attendance_log_weekly():
+    CV.comvida_login(url="https://adaptiveems.com/Home/SS51/Staff%20Scheduling/SSReports/AttendanceLog")
+    
+    #input next week's dates
+    al_start_date_element = CV.driver.find_element(By.ID,"rptSSDateRange_DateFrom_I")
+    al_start_date_element.send_keys(11*Keys.BACKSPACE)
+    al_start_date_element.send_keys(CV.relative_date_today(days=1))
+
+    al_end_date_element = CV.driver.find_element(By.ID, "rptSSDateRange_DateTo_I")
+    al_end_date_element.send_keys(11*Keys.BACKSPACE)
+    al_end_date_element.send_keys(CV.relative_date_today(days=7))
+
+    #input paid and counted 
+    CV.hover_click_element(CV.driver.find_element(By.ID,"cbPaid_B-1Img")) #click paid dropdown
+    CV.hover_click_element(CV.driver.find_element(By.ID,"cbPaid_DDD_L_LBI1T0")) #click paid list item
+
+    CV.hover_click_element(CV.driver.find_element(By.ID, "cbCounted_B-1Img")) #click counted dropdown
+    CV.hover_click_element(CV.driver.find_element(By.ID,"cbCounted_DDD_L_LBI1T0" )) #click counted item
+    
+    for x in assignType:
+        scroll_and_click_id("AssignType", x) #assignType click list
+
+    SS_Dept = ["HK", "LA", "FS"]
+
+    def weeklyReportDept(dept):
+        scroll_and_click_id("DeptSelected", dept) # select  dept
+        
+        CV.hover_click_element(CV.driver.find_element(By.ID, "btnView_CD")) #click view report
+        CV.hover_click_element(wait.until(CV.EC.element_to_be_clickable((  # wait then click view pdf
+            By.ID, "DocumentViewer_Splitter_Toolbar_Menu_DXI9_T")))) 
+
+        while not os.path.exists("./SSAttendanceLog.pdf"): #wait until downloaded
+            time.sleep(.5)
+
+        dlfile = "SSAttendanceLog.pdf"
+        movedfile = ("Reports/SS_Weekly_Reports/SSAlog " + dept +
+            datetime.now().strftime(" %B %d, %Y") + ".pdf")
+        
+        for attempt in range(10): #if file exists, overwrite file
+            try:
+                os.rename(dlfile, movedfile) #rename and move to reports folder
+            except FileExistsError:
+                try: 
+                    os.remove(movedfile)
+                except FileNotFoundError:
+                    os.remove(dlfile)
+            else:
+                break
+        
+        CV.hover_click_element(CV.driver.find_element(By.ID, "btnBack_CD"))
+        scroll_to_top("DeptSelected")
+        reset_category("DeptSelected")
+        
+    
+    for x in SS_Dept:
+        weeklyReportDept(x)
+
 def scroll_and_click_id(cat_prefix, checkbox_dept, scroll_delay = 0.1):
     
     full_checkbox_id = "lst" + cat_prefix + "_" + checkbox_dept + "_D"
@@ -161,6 +218,11 @@ def scroll_and_click_id(cat_prefix, checkbox_dept, scroll_delay = 0.1):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+def scroll_to_top(cat_prefix):
+    full_scrollbar_id = "lst" + cat_prefix + "_D"
+    scrollable_element = CV.driver.find_element(By.ID, full_scrollbar_id)
+    CV.driver.execute_script("arguments[0].scrollTop = 0;", scrollable_element)
+
 def report_filename(location, offset = 1, filetype = ".xlsx"):
     offset_date = datetime.now() + timedelta(days=offset)
     file_date = offset_date.strftime( "%B %d, %Y")
@@ -173,12 +235,19 @@ def report_filename(location, offset = 1, filetype = ".xlsx"):
         case "Court":
             return "TC Attendance Log - " + file_date + filetype
 
-def main():
-    for x in Alog_locations:
-        comvida_attendance_log_daily(*x, offset=1)
+def reset_category(cat_prefix):
+    CV.driver.find_element(By.ID, "lst" + cat_prefix + "_LBSACB_S_D").click()
+    CV.driver.find_element(By.ID, "lst" + cat_prefix + "_LBSACB_S_D").click()
 
-    comvida_night_attendance_log()
+
+
+def main():
+    # for x in Alog_locations:
+    #     comvida_attendance_log_daily(*x, offset=1)
+
+    # comvida_night_attendance_log()
     # comvida_attendance_log_daily("Home", TH_dept, offset=2)
+    comvida_SS_attendance_log_weekly()
     CV.driver.quit()
 
 if __name__ == "__main__":
